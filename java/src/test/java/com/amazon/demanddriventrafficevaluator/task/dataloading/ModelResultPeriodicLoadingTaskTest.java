@@ -5,6 +5,7 @@ package com.amazon.demanddriventrafficevaluator.task.dataloading;
 
 import com.amazon.demanddriventrafficevaluator.repository.entity.ModelConfiguration;
 import com.amazon.demanddriventrafficevaluator.repository.entity.ModelDefinition;
+import com.amazon.demanddriventrafficevaluator.repository.entity.ModelFormat;
 import com.amazon.demanddriventrafficevaluator.repository.loader.DefaultLoader;
 import com.amazon.demanddriventrafficevaluator.repository.loader.model.ModelResultLoaderInput;
 import com.amazon.demanddriventrafficevaluator.repository.provider.configuration.ConfigurationProvider;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
@@ -142,6 +144,78 @@ class ModelResultPeriodicLoadingTaskTest {
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> task.executeTask());
+    }
+
+    @Test
+    void testExecuteTask_bloomFilterModelsAreSkipped() {
+        try (MockedStatic<PropertiesUtil> mockPropertiesUtil = mockStatic(PropertiesUtil.class)) {
+            mockPropertiesUtil.when(PropertiesUtil::getFileSharingS3BucketProperties).thenReturn(mockFileSharingS3BucketProperties);
+
+            // Arrange
+            Map<String, ModelDefinition> modelDefinitions = new HashMap<>();
+
+            ModelDefinition bloomFilterModel = new ModelDefinition();
+            bloomFilterModel.setIdentifier("bf_model");
+            bloomFilterModel.setModelFormat(ModelFormat.BLOOM_FILTER);
+            modelDefinitions.put("bf_model", bloomFilterModel);
+
+            ModelDefinition ruleBasedModel = new ModelDefinition();
+            ruleBasedModel.setIdentifier("rule_model");
+            ruleBasedModel.setModelFormat(ModelFormat.RULE_BASED);
+            modelDefinitions.put("rule_model", ruleBasedModel);
+
+            when(mockModelConfigurationProvider.provide()).thenReturn(mockModelConfiguration);
+            when(mockModelConfiguration.getModelDefinitionByIdentifier()).thenReturn(modelDefinitions);
+            when(mockFileSharingS3BucketProperties.getString("adsp", "test-bucket"))
+                    .thenReturn("testBucket");
+
+            // Act
+            task.executeTask();
+
+            // Assert - only the rule-based model should be loaded, bloom filter should be skipped
+            ArgumentCaptor<ModelResultLoaderInput> captor = ArgumentCaptor.forClass(ModelResultLoaderInput.class);
+            verify(mockModelResultLoader, times(1)).load(captor.capture());
+
+            ModelResultLoaderInput input = captor.getValue();
+            assertEquals("rule_model", input.getModelIdentifier());
+        }
+    }
+
+    @Test
+    void testExecuteTask_ruleBasedModelsContinueToLoadNormally() {
+        try (MockedStatic<PropertiesUtil> mockPropertiesUtil = mockStatic(PropertiesUtil.class)) {
+            mockPropertiesUtil.when(PropertiesUtil::getFileSharingS3BucketProperties).thenReturn(mockFileSharingS3BucketProperties);
+
+            // Arrange
+            Map<String, ModelDefinition> modelDefinitions = new HashMap<>();
+
+            ModelDefinition ruleBasedModel1 = new ModelDefinition();
+            ruleBasedModel1.setIdentifier("rule_model_1");
+            ruleBasedModel1.setModelFormat(ModelFormat.RULE_BASED);
+            modelDefinitions.put("rule_model_1", ruleBasedModel1);
+
+            ModelDefinition ruleBasedModel2 = new ModelDefinition();
+            ruleBasedModel2.setIdentifier("rule_model_2");
+            ruleBasedModel2.setModelFormat(ModelFormat.RULE_BASED);
+            modelDefinitions.put("rule_model_2", ruleBasedModel2);
+
+            when(mockModelConfigurationProvider.provide()).thenReturn(mockModelConfiguration);
+            when(mockModelConfiguration.getModelDefinitionByIdentifier()).thenReturn(modelDefinitions);
+            when(mockFileSharingS3BucketProperties.getString("adsp", "test-bucket"))
+                    .thenReturn("testBucket");
+
+            // Act
+            task.executeTask();
+
+            // Assert - both rule-based models should be loaded
+            ArgumentCaptor<ModelResultLoaderInput> captor = ArgumentCaptor.forClass(ModelResultLoaderInput.class);
+            verify(mockModelResultLoader, times(2)).load(captor.capture());
+
+            List<ModelResultLoaderInput> inputs = captor.getAllValues();
+            assertEquals(2, inputs.size());
+            assertTrue(inputs.stream().anyMatch(i -> i.getModelIdentifier().equals("rule_model_1")));
+            assertTrue(inputs.stream().anyMatch(i -> i.getModelIdentifier().equals("rule_model_2")));
+        }
     }
 
     @Test

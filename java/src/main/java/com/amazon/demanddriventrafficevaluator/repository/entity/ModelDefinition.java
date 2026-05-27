@@ -41,4 +41,10 @@ public class ModelDefinition {
 
     @JsonProperty("features")
     private List<FeatureConfiguration> features;
+
+    @JsonProperty("modelFormat")
+    private ModelFormat modelFormat = ModelFormat.RULE_BASED;
+
+    @JsonProperty("s3PathMode")
+    private S3PathMode s3PathMode = S3PathMode.DYNAMIC;
 }

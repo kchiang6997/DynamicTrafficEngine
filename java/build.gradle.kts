@@ -197,12 +197,12 @@ tasks {
     jar {
         archiveBaseName.set("DemandDrivenTrafficEvaluator")
         archiveClassifier.set("core")
-        archiveVersion.set("2.0.0") // Set your library version
+        archiveVersion.set("2.1.0") // Set your library version
     }
     named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         archiveBaseName.set("DemandDrivenTrafficEvaluator")
         archiveClassifier.set("fat")
-        archiveVersion.set("2.0.0") // Set your library version
+        archiveVersion.set("2.1.0") // Set your library version
         destinationDirectory.set(layout.buildDirectory.dir("libs"))
         configurations = listOf(project.configurations.runtimeClasspath.get())
 

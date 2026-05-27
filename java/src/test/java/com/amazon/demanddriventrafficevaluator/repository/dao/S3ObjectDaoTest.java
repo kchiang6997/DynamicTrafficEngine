@@ -12,6 +12,8 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.InputStream;
@@ -55,6 +57,8 @@ class S3ObjectDaoTest {
                 .bucket(bucketName)
                 .key(key)
                 .build();
+        when(mockS3Client.headObject(any(HeadObjectRequest.class)))
+                .thenReturn(HeadObjectResponse.builder().contentLength(1024L).build());
         when(mockS3Client.getObject(any(GetObjectRequest.class))).thenReturn(mockResponseResponseInputStream);
 
         // Act
@@ -71,7 +75,7 @@ class S3ObjectDaoTest {
         // Arrange
         String bucketName = "testBucket";
         String key = "testKey";
-        when(mockS3Client.getObject(any(GetObjectRequest.class)))
+        when(mockS3Client.headObject(any(HeadObjectRequest.class)))
                 .thenThrow(S3Exception.builder().message("S3 Error").build());
 
         // Act
@@ -79,7 +83,7 @@ class S3ObjectDaoTest {
 
         // Assert
         assertFalse(result.isPresent());
-        verify(mockS3Client).getObject(any(GetObjectRequest.class));
+        verify(mockS3Client).headObject(any(HeadObjectRequest.class));
     }
 
     @Test
@@ -87,7 +91,7 @@ class S3ObjectDaoTest {
         // Arrange
         String bucketName = "testBucket";
         String key = "testKey";
-        when(mockS3Client.getObject(any(GetObjectRequest.class)))
+        when(mockS3Client.headObject(any(HeadObjectRequest.class)))
                 .thenThrow(new RuntimeException("Unexpected error"));
 
         // Act
@@ -95,7 +99,25 @@ class S3ObjectDaoTest {
 
         // Assert
         assertFalse(result.isPresent());
-        verify(mockS3Client).getObject(any(GetObjectRequest.class));
+        verify(mockS3Client).headObject(any(HeadObjectRequest.class));
+    }
+
+    @Test
+    void testGet_ExceedsMaxSize_ReturnsEmpty() {
+        // Arrange
+        String bucketName = "testBucket";
+        String key = "testKey";
+        long oversizedLength = 31L * 1024 * 1024; // 31 MB
+        when(mockS3Client.headObject(any(HeadObjectRequest.class)))
+                .thenReturn(HeadObjectResponse.builder().contentLength(oversizedLength).build());
+
+        // Act
+        Optional<InputStream> result = s3ObjectDao.get(bucketName, key);
+
+        // Assert
+        assertFalse(result.isPresent());
+        verify(mockS3Client).headObject(any(HeadObjectRequest.class));
+        verify(mockS3Client, org.mockito.Mockito.never()).getObject(any(GetObjectRequest.class));
     }
 
     @Test

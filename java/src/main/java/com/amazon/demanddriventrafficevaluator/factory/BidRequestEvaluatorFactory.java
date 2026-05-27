@@ -21,11 +21,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public abstract class BidRequestEvaluatorFactory {
 
     public static BidRequestEvaluatorFactory create(String supplierName, AwsCredentialsProvider credentialsProvider, String region, String bucket) {
-        return new BidRequestEvaluatorOnRuleBasedModelFactory(supplierName, credentialsProvider, region, bucket);
+        return new DefaultBidRequestEvaluatorFactory(supplierName, credentialsProvider, region, bucket);
     }
 
     public static BidRequestEvaluatorFactory create(String supplierName, AwsCredentialsProvider credentialsProvider, String region, String bucket, ScheduledThreadPoolExecutor executor) {
-        return new BidRequestEvaluatorOnRuleBasedModelFactory(supplierName, credentialsProvider, region, bucket, executor);
+        return new DefaultBidRequestEvaluatorFactory(supplierName, credentialsProvider, region, bucket, executor);
     }
 
     public abstract TaskInitializer getTaskInitializer();

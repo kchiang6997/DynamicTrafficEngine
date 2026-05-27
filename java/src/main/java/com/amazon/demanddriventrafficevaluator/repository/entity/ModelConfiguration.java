@@ -4,6 +4,7 @@
 package com.amazon.demanddriventrafficevaluator.repository.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,6 +15,7 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ModelConfiguration extends Configuration {
 
     @JsonProperty("modelDefinitionByIdentifier")

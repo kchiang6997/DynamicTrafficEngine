@@ -5,11 +5,10 @@ package com.amazon.demanddriventrafficevaluator.factory;
 
 import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.BidRequestEvaluator;
 import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.BidRequestEvaluatorOnRuleBasedModel;
+import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.ConfigurableAggregator;
+import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.DelegatingModelEvaluator;
 import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.ModelEvaluationResultsAggregator;
-import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.ModelEvaluationResultsMaxAggregator;
 import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.ModelEvaluator;
-import com.amazon.demanddriventrafficevaluator.evaluation.evaluator.RuleBasedModelEvaluator;
-import com.amazon.demanddriventrafficevaluator.repository.provider.configuration.ModelConfigurationProvider;
 import com.amazon.demanddriventrafficevaluator.task.TaskInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
-class BidRequestEvaluatorOnRuleBasedModelFactoryTest {
+class DefaultBidRequestEvaluatorFactoryTest {
 
     @Mock
     private AwsCredentialsProvider mockCredentialsProvider;
@@ -33,18 +32,17 @@ class BidRequestEvaluatorOnRuleBasedModelFactoryTest {
     @Mock
     private ScheduledThreadPoolExecutor mockExecutor;
 
-    @Mock
-    private TaskInitializer mockTaskInitializer;
-
-    private BidRequestEvaluatorOnRuleBasedModelFactory factory;
+    private DefaultBidRequestEvaluatorFactory factory;
 
     @BeforeEach
     void setUp() {
-        factory = new BidRequestEvaluatorOnRuleBasedModelFactory("testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket");
+        factory = new DefaultBidRequestEvaluatorFactory(
+                "testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket");
     }
 
     @Test
     void testConstructorWithFourParameters() {
+        // Arrange & Act
         assertNotNull(factory);
         assertEquals("testSupplier", factory.sspIdentifier);
         assertNotNull(factory.defaultTaskInitializerFactory);
@@ -52,7 +50,11 @@ class BidRequestEvaluatorOnRuleBasedModelFactoryTest {
 
     @Test
     void testConstructorWithFiveParameters() {
-        factory = new BidRequestEvaluatorOnRuleBasedModelFactory("testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket", mockExecutor);
+        // Arrange & Act
+        factory = new DefaultBidRequestEvaluatorFactory(
+                "testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket", mockExecutor);
+
+        // Assert
         assertNotNull(factory);
         assertEquals("testSupplier", factory.sspIdentifier);
         assertNotNull(factory.defaultTaskInitializerFactory);
@@ -60,48 +62,68 @@ class BidRequestEvaluatorOnRuleBasedModelFactoryTest {
 
     @Test
     void testGetTaskInitializer() {
+        // Act
         TaskInitializer initializer = factory.getTaskInitializer();
+
+        // Assert
         assertNotNull(initializer);
     }
 
     @Test
-    void testGetEvaluator() {
+    void testGetEvaluatorReturnsBidRequestEvaluatorOnRuleBasedModel() {
+        // Act
         BidRequestEvaluator evaluator = factory.getEvaluator();
+
+        // Assert
         assertNotNull(evaluator);
         assertTrue(evaluator instanceof BidRequestEvaluatorOnRuleBasedModel);
     }
 
     @Test
-    void testProvideModelConfigurationProvider() {
-        ModelConfigurationProvider provider = factory.provideModelConfigurationProvider();
-        assertNotNull(provider);
-    }
-
-    @Test
-    void testProvideModelEvaluator() {
+    void testProvideModelEvaluatorReturnsDelegatingModelEvaluator() {
+        // Act
         ModelEvaluator evaluator = factory.provideModelEvaluator();
+
+        // Assert
         assertNotNull(evaluator);
-        assertTrue(evaluator instanceof RuleBasedModelEvaluator);
+        assertTrue(evaluator instanceof DelegatingModelEvaluator);
     }
 
     @Test
-    void testProvideModelEvaluationResultsAggregator() {
+    void testProvideModelEvaluationResultsAggregatorReturnsConfigurableAggregator() {
+        // Act
         ModelEvaluationResultsAggregator aggregator = factory.provideModelEvaluationResultsAggregator();
+
+        // Assert
         assertNotNull(aggregator);
-        assertTrue(aggregator instanceof ModelEvaluationResultsMaxAggregator);
+        assertTrue(aggregator instanceof ConfigurableAggregator);
     }
 
     @Test
-    void testCreateWithFourParameters() {
-        BidRequestEvaluatorFactory result = BidRequestEvaluatorFactory.create("testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket");
-        assertNotNull(result);
-        assertTrue(result instanceof BidRequestEvaluatorOnRuleBasedModelFactory);
+    void testProvideModelConfigurationProvider() {
+        // Act & Assert
+        assertNotNull(factory.provideModelConfigurationProvider());
     }
 
     @Test
-    void testCreateWithFiveParameters() {
-        BidRequestEvaluatorFactory result = BidRequestEvaluatorFactory.create("testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket", mockExecutor);
+    void testCreateFourParameters() {
+        // Act
+        BidRequestEvaluatorFactory result = BidRequestEvaluatorFactory.create(
+                "testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket");
+
+        // Assert
         assertNotNull(result);
-        assertTrue(result instanceof BidRequestEvaluatorOnRuleBasedModelFactory);
+        assertTrue(result instanceof DefaultBidRequestEvaluatorFactory);
+    }
+
+    @Test
+    void testCreateFiveParameters() {
+        // Act
+        BidRequestEvaluatorFactory result = BidRequestEvaluatorFactory.create(
+                "testSupplier", mockCredentialsProvider, "us-west-2", "test-bucket", mockExecutor);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result instanceof DefaultBidRequestEvaluatorFactory);
     }
 }

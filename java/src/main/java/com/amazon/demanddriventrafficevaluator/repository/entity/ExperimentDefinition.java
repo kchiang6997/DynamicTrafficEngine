@@ -46,4 +46,7 @@ public class ExperimentDefinition {
 
     @JsonProperty("hash")
     private boolean hashEnabled;
+
+    @JsonProperty("aggregationSchema")
+    private AggregationNode aggregationSchema;
 }

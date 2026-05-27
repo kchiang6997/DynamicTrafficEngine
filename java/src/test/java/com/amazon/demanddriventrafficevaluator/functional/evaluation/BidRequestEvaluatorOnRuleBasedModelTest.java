@@ -94,6 +94,11 @@ public class BidRequestEvaluatorOnRuleBasedModelTest extends BaseTestCase {
         fileIdentifierCacheDao = new LocalCacheDao<>(localCacheRegistry);
         modelConfigurationCacheDao = new LocalCacheDao<>(localCacheRegistry);
         modelConfigurationProvider = new ModelConfigurationProvider(modelConfigurationCacheDao);
+
+        // Stub headObject to always return a small content-length (size check passes)
+        when(s3Client.headObject(ArgumentMatchers.<software.amazon.awssdk.services.s3.model.HeadObjectRequest>any()))
+                .thenReturn(software.amazon.awssdk.services.s3.model.HeadObjectResponse.builder()
+                        .contentLength(1024L).build());
     }
 
     private void setupMocks(boolean useMultiModel, String eTag) {

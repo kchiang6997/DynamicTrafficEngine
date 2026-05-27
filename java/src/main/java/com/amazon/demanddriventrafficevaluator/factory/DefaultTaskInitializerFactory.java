@@ -96,7 +96,12 @@ public class DefaultTaskInitializerFactory {
         return new TaskInitializer(getStageOneTasks(), getStageTwoTasks(), overallTimeoutMs);
     }
 
-    private List<InitializerTask> getStageOneTasks() {
+    /**
+     * Package-private: consumed by {@link DefaultBidRequestEvaluatorFactory}
+     * to reuse shared initialization tasks. Do not change signature without
+     * updating that class.
+     */
+    List<InitializerTask> getStageOneTasks() {
         InitializerTask experimentConfigurationPeriodicLoadingTask = getInitializerTaskForPeriodicLoadingExperimentConfiguration();
         InitializerTask modelConfigurationPeriodicLoadingTask = getInitializerTaskForPeriodicLoadingModelConfiguration();
         InitializerTask ModelFeatureExtractorRegistrationInitializerTask = getInitializerTaskForRegisteringModelFeatureExtractor();
@@ -109,7 +114,7 @@ public class DefaultTaskInitializerFactory {
         );
     }
 
-    private List<InitializerTask> getStageTwoTasks() {
+    List<InitializerTask> getStageTwoTasks() {
         InitializerTask modelResultPeriodicLoadingInitializerTask = getInitializerTaskForPeriodicLoadingRuleBasedModelResult();
         return List.of(modelResultPeriodicLoadingInitializerTask);
     }
@@ -163,7 +168,7 @@ public class DefaultTaskInitializerFactory {
         );
     }
 
-    private InitializerTask getInitializerTaskForPeriodicLoadingRuleBasedModelResult() {
+    InitializerTask getInitializerTaskForPeriodicLoadingRuleBasedModelResult() {
         LocalCacheDao<String, ModelConfiguration> modelConfigurationCacheDao = new LocalCacheDao<>(localCacheRegistry);
         ConfigurationProvider<ModelConfiguration> modelConfigurationProvider = new ModelConfigurationProvider(modelConfigurationCacheDao);
         Dao<String, Double> modelResultsCacheDao = new LocalCacheDao<>(localCacheRegistry);

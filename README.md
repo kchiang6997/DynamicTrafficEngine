@@ -758,7 +758,7 @@ These extensions can be retrieved in the DTE Response object under the `Response
 Note that if the request is in control (learning=1), the `Response.slots[*].filterDecision` value will always be 1.0, regardless of the model result. If the request is in treatment (learning=0), the `Response.slots[*].filterDecision` value can be either 0.0 or 1.0, based on the model result.
 
 If sending via HTTP header, currently only available in Java implementation:
-1. Retrieve the protobuf generated message from Response using `Response.getExtProto`
+1. Retrieve the protobuf generated message from Response using `Response.toExtProto`
 2. Generate a URI safe string using `ResponseUtil.encodedResponseMetadata`
 3. Send this string as value for HTTP Header named `X-Amazon-Test: <encoded string>`
 
